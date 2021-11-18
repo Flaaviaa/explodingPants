@@ -1,42 +1,57 @@
-#include <Arduino.h>
 #include <Wire.h>
 
 #define rele_solenoide A0
 
 const int MPU = 0x68;
 
-int AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ;
+float AccX, AccY, AccZ;
+
+float GyroX, GyroY, GyroZ;
+float accAngleX, accAngleY, gyroAngleX, gyroAngleY, gyroAngleZ;
+float roll, pitch, yaw;
+float AccErrorX, AccErrorY, GyroErrorX, GyroErrorY, GyroErrorZ;
+float elapsedTime, currentTime, previousTime;
+
+int c = 0;
 
 void setup() {
-  Serial.begin(9600);
-
-  digitalWrite(rele_solenoide, HIGH);
-  Wire.write(0);
+  Serial.begin(19200);
+  Wire.begin();                      
+  Wire.beginTransmission(MPU);       
+  Wire.write(0x6B);                  
+  Wire.write(0x00);                  
   Wire.endTransmission(true);
-
 }
 
 void loop() {
   Wire.beginTransmission(MPU);
   Wire.write(0x3B);
   Wire.endTransmission(false);
-  Wire.requestFrom(MPU, 14, true);
+  Wire.requestFrom(MPU, 6, true);
+  
+  AccX = (Wire.read() << 8 | Wire.read()) / 4096.0;
+  AccY = (Wire.read() << 8 | Wire.read()) / 4096.0;
+  AccZ = (Wire.read() << 8 | Wire.read()) / 4096.0;
+  
+  Wire.beginTransmission(MPU);
+  Wire.write(0x43);
+  Wire.endTransmission(false);
+  Wire.requestFrom(MPU, 6, true);
+  
+  GyroX = (Wire.read() << 8 | Wire.read()) / 131.0;
+  GyroY = (Wire.read() << 8 | Wire.read()) / 131.0;
+  GyroZ = (Wire.read() << 8 | Wire.read()) / 131.0;
+  
+  GyroX = GyroX + 0.56;
+  GyroY = GyroY - 2;
+  GyroZ = GyroZ + 0.79;
+  
+  if (AccX >= 0.2 && AccX <= 0.4 && GyroX >= 26 && GyroX <= 30){
+     digitalWrite(rele_solenoide, HIGH);  
+  } else if (AccY >= 0.2 && AccY <= 0.4 && GyroY >= 26 && GyroY <= 30){
+     digitalWrite(rele_solenoide, HIGH);  
+  } else if (AccZ >= 0.2 && AccY <= 0.4 && GyroY >= 26 && GyroY <= 30){
+     digitalWrite(rele_solenoide, HIGH);  
+  }
 
-  AcX = Wire.read() << 8 | Wire.read();
-  AcY = Wire.read() << 8 | Wire.read();
-  AcZ = Wire.read() << 8 | Wire.read();
-  Tmp = Wire.read() << 8 | Wire.read();
-  GyX = Wire.read() << 8 | Wire.read();
-  GyY = Wire.read() << 8 | Wire.read();
-  GyZ = Wire.read() << 8 | Wire.read();
-
-  Serial.print("AcX = "); Serial.print(AcX);
-  Serial.print(" | AcY = "); Serial.print(AcY);
-  Serial.print(" | AcZ = "); Serial.print(AcZ);
-  Serial.print(" | Tmp = "); Serial.print(Tmp / 340.00 + 36.53);
-  Serial.print(" | GyX = "); Serial.print(GyX);
-  Serial.print(" | GyY = "); Serial.print(GyY);
-  Serial.print(" | GyZ = "); Serial.println(GyZ);
-
-  delay(300);
 }
