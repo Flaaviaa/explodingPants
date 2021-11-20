@@ -1,8 +1,9 @@
 #include <Wire.h>
 
-#define rele_solenoide A0
+#define rele_solenoide_esq A0
+#define rele_solenoide_dir A1
 
-const int MPU = 0x68;
+const int MPU = 0x68; // MPU6050 I2C address
 
 float AccX, AccY, AccZ;
 
@@ -47,11 +48,14 @@ void loop() {
   GyroZ = GyroZ + 0.79;
   
   if (AccX >= 0.2 && AccX <= 0.4 && GyroX >= 26 && GyroX <= 30){
-     digitalWrite(rele_solenoide, HIGH);  
+     digitalWrite(rele_solenoide_esq, HIGH);
+     digitalWrite(rele_solenoide_dir, HIGH);  
   } else if (AccY >= 0.2 && AccY <= 0.4 && GyroY >= 26 && GyroY <= 30){
-     digitalWrite(rele_solenoide, HIGH);  
+     digitalWrite(rele_solenoide_esq, HIGH);
+     digitalWrite(rele_solenoide_dir, HIGH);  
   } else if (AccZ >= 0.2 && AccY <= 0.4 && GyroY >= 26 && GyroY <= 30){
-     digitalWrite(rele_solenoide, HIGH);  
+     digitalWrite(rele_solenoide_esq, HIGH);
+     digitalWrite(rele_solenoide_dir, HIGH);  
   }
 
 }
