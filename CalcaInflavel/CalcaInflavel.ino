@@ -13,8 +13,8 @@ float  gx_rate, gy_rate, gz_rate;
 #define Register_Y1 0x35
 #define Register_Z0 0x36
 #define Register_Z1 0x37
-#define rele_solenoide_esq A0
-#define rele_solenoide_dir A1
+int rele_solenoide_esq = 3;
+int rele_solenoide_dir = 4;
 
 int ADXAddress = 0x53;
 int reading = 0;
@@ -22,12 +22,16 @@ int val=0;
 int X0,X1,X_out;
 int Y0,Y1,Y_out;
 int Z1,Z0,Z_out;
-double Xg,Yg,Zg;
-float goffsetX, goffsetY, goffsetZ;
+double Xa,Ya,Za;
+float acceleration_magnitude;
 
+float goffsetX, goffsetY, goffsetZ;
+float gyro_magnitude;
 void setup() {
   Wire.begin();                
   Serial.begin(9600);
+  pinMode (rele_solenoide_esq, OUTPUT);
+  pinMode (rele_solenoide_dir, OUTPUT);
   for (int i = 0; i <= 200; i++) {
     gyro.readGyro(&gx,&gy,&gz);
     if (i == 0) {
@@ -55,6 +59,8 @@ void setup() {
 }
 
 void loop() {
+  digitalWrite(rele_solenoide_esq, LOW);
+  digitalWrite(rele_solenoide_dir, LOW);
   //--------------X
   Wire.beginTransmission(ADXAddress); // transmit to device
   Wire.write(Register_X0);
@@ -84,7 +90,7 @@ void loop() {
   }
   
   //------------------Z
-  Wire.beginTransmission(ADXAddress); // transmit to device
+  Wire.beginTransmission(ADXAddress); // transmit to device 
   Wire.write(Register_Z0);
   Wire.write(Register_Z1);
   Wire.endTransmission();
@@ -97,45 +103,31 @@ void loop() {
     Z_out=Z0+Z1;
   }
   
-  Xg=X_out/256.0;
-  Yg=Y_out/256.0;
-  Zg=Z_out/256.0;
+  Xa = X_out/256.0;
+  Ya = Y_out/256.0;
+  Za = Z_out/256.0;
   
-  Serial.print("aX= ");
-  Serial.print(Xg);
+  acceleration_magnitude = sqrt(pow(Xa,2) + pow(Ya, 2) + pow(Za, 2));
+  
+  Serial.print("aceleration magnitude= ");
+  Serial.print(acceleration_magnitude);
   Serial.print("       ");
-  Serial.print("aY= ");
-  Serial.print(Yg);
-  Serial.print("       ");
-  Serial.print("aZ= ");
-  Serial.print(Zg);
-  Serial.println("  ");
   
   gyro.readGyro(&gx,&gy,&gz);
   gx_rate = (gx-goffsetX) / 16.4;
   gy_rate = (gy-goffsetY) / 16.4;
   gz_rate = (gz-goffsetZ) / 16.4;
   
-  Serial.print("gX= ");
-  Serial.print(gx_rate);
-  Serial.print("       ");
-  Serial.print("gY= ");
-  Serial.print(gy_rate);
-  Serial.print("       ");
-  Serial.print("gZ= ");
-  Serial.print(gz_rate);
-  Serial.println("  ");
+  gyro_magnitude = sqrt(pow(gx_rate, 2) + pow(gy_rate, 2) + pow(gz_rate, 2));
   
-  if (Xg >= 0.2 && Xg <= 0.4 && gx_rate >= 26 && gx_rate <= 30){
+  Serial.print("gyro magnitude= ");
+  Serial.print(gyro_magnitude);
+  Serial.print("       ");
+  
+  if (acceleration_magnitude > 2 && gyro_magnitude > 0.4){
      digitalWrite(rele_solenoide_esq, HIGH);
-     digitalWrite(rele_solenoide_dir, HIGH);  
-  } else if (Yg >= 0.2 && Yg <= 0.4 && gy_rate >= 26 && gy_rate <= 30){
-     digitalWrite(rele_solenoide_esq, HIGH);
-     digitalWrite(rele_solenoide_dir, HIGH);  
-  } else if (Zg >= 0.2 && Zg <= 0.4 && gz_rate >= 26 && gz_rate <= 30){
-     digitalWrite(rele_solenoide_esq, HIGH);
-     digitalWrite(rele_solenoide_dir, HIGH);  
+     digitalWrite(rele_solenoide_dir, HIGH); 
   }
   
-  delay(1000);
+  delay(100);
 }
